@@ -9,17 +9,20 @@ import os
 import replicate
 import requests
 
+import fiftyone.brain as fob
+import fiftyone as fo
+
 import fiftyone.operators as foo
 from fiftyone.operators import types
 
-import fiftyone as fo
-import fiftyone.brain as fob
 import fiftyone.zoo as foz
 from fiftyone import ViewField as F
 
 
 def get_min_dist(query, dataset):
-    return dataset.sort_by_similarity(query, k=1, dist_field="dist").first().dist
+    return (
+        dataset.sort_by_similarity(query, k=1, dist_field="dist").first().dist
+    )
 
 
 def generate_filename(prompt):
@@ -68,7 +71,10 @@ def generate_sample_from_prompt(prompt, dataset, clip_model):
 
     dataset.delete_brain_run("text_clip_umap")
     fob.compute_visualization(
-        dataset, embeddings="text_embedding", method="umap", brain_key="text_clip_umap"
+        dataset,
+        embeddings="text_embedding",
+        method="umap",
+        brain_key="text_clip_umap",
     )
 
 
@@ -114,7 +120,6 @@ class CreateEmoji(foo.Operator):
             outputs.float("min_dist", label="Minimum Distance")
             view = types.View(label="Emoji Not Unique Enough")
             return types.Property(outputs, view=view)
-
 
     def execute(self, ctx):
         dataset = ctx.dataset

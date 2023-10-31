@@ -1,12 +1,9 @@
 ## Emoji Creation Plugin
 
-
 ### Updates
-
 
 This plugin is a Python plugin that allows you to create emojis from text prompts
 and add them to the dataset... if they are unique enough!
-
 
 ## Installation
 
