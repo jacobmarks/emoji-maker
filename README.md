@@ -27,3 +27,4 @@ This operator creates an emoji from a text prompt and adds it to the dataset.
 
 1. Add moderation to the emoji creation process using OpenAI moderation API.
 2. Prohibit names of people. Likely with LangChain function calling.
+3. Only activate operator when dataset name is "Emojis"
