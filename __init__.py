@@ -91,7 +91,7 @@ class CreateEmoji(foo.Operator):
 
     def resolve_placement(self, ctx):
         return types.Placement(
-            types.Places.SAMPLES_GRID_ACTIONS,
+            types.Places.SAMPLES_GRID_SECONDARY_ACTIONS,
             types.Button(
                 label="Create Emoji",
                 icon="/assets/icon.svg",
