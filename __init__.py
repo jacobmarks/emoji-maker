@@ -61,6 +61,14 @@ def generate_sample_from_prompt(prompt, dataset, clip_model):
     with open(filepath, "wb") as f:
         f.write(content)
 
+    url = replicate.run(
+        "cjwbw/rembg:fb8af171cfa1616ddcf1242c093f9c46bcada5ad4cf6f2fbe8b81b330ec5c003",
+        input={"image": open(filepath, "rb")}
+    )
+    content = requests.get(url).content
+    with open(filepath, "wb") as f:
+        f.write(content)
+
     sample = fo.Sample(
         filepath=filepath,
         name=prompt,
