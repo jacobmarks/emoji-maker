@@ -38,13 +38,13 @@ def generate_sample_from_prompt(prompt, dataset, clip_model):
         "prompt": f"A TOK emoji of {prompt}, white background",
         "refine": "expert_ensemble_refiner",
         "scheduler": "K_EULER",
-        "lora_scale": 0.6,
+        "lora_scale": 0.8,
         "num_outputs": 1,
         "guidance_scale": 7.5,
         "apply_watermark": False,
         "high_noise_frac": 0.99,
         "negative_prompt": "",
-        "prompt_strength": 0.8,
+        "prompt_strength": 0.9,
         "num_inference_steps": 50,
     }
 
@@ -76,14 +76,6 @@ def generate_sample_from_prompt(prompt, dataset, clip_model):
         original=False,
     )
     dataset.add_sample(sample)
-
-    dataset.delete_brain_run("text_clip_umap")
-    fob.compute_visualization(
-        dataset,
-        embeddings="text_embedding",
-        method="umap",
-        brain_key="text_clip_umap",
-    )
 
 
 class CreateEmoji(foo.Operator):
