@@ -90,13 +90,17 @@ class CreateEmoji(foo.Operator):
         return _config
 
     def resolve_placement(self, ctx):
-        return types.Placement(
-            types.Places.SAMPLES_GRID_SECONDARY_ACTIONS,
-            types.Button(
-                label="Create Emoji",
-                icon="/assets/icon.svg",
-            ),
-        )
+        if "emoji" in ctx.dataset.name.lower():
+            return types.Placement(
+                types.Places.SAMPLES_GRID_SECONDARY_ACTIONS,
+                types.Button(
+                    label="Create Emoji",
+                    icon="/assets/icon.svg",
+                ),
+            )
+        else:
+            return types.Placement()
+
 
     def resolve_input(self, ctx):
         inputs = types.Object()
