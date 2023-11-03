@@ -32,10 +32,9 @@ MODEL_NAME = "clip-vit-base32-torch"
 DIST_THRESH = 0.15
 UNIQUENESS_THRESH = 0.7
 
+
 def _ensure_compliance(prompt):
-    response = openai.Moderation.create(
-        input=prompt
-    )
+    response = openai.Moderation.create(input=prompt)
     flagged = response["results"][0]["flagged"]
     return not flagged
 
@@ -45,11 +44,15 @@ def _compute_query_uniqueness(query_embedding, dataset):
         distances, _ = knn.kneighbors(query.reshape(1, -1))
         res = distances @ DIST_WEIGHTS
         return res[0]
-    
+
     embeddings = dataset.values(TEXT_EMBEDDING_FIELD)
     knn = NearestNeighbors(n_neighbors=K).fit(embeddings)
 
-    most_unique_sample = dataset.exists(TEXT_UNIQUENESS_FIELD).sort_by(TEXT_UNIQUENESS_FIELD).last()
+    most_unique_sample = (
+        dataset.exists(TEXT_UNIQUENESS_FIELD)
+        .sort_by(TEXT_UNIQUENESS_FIELD)
+        .last()
+    )
     mu_embedding = most_unique_sample[TEXT_EMBEDDING_FIELD]
 
     uqu = _compute_unscaled_query_uniqueness(query_embedding, knn)
@@ -61,9 +64,7 @@ def get_min_dist(query_embedding, dataset):
     closest_sample = dataset.sort_by_similarity(
         query_embedding, brain_key=TEXT_SIM_KEY, k=1
     ).first()
-    return cosine(
-        query_embedding, closest_sample[TEXT_EMBEDDING_FIELD]
-        )
+    return cosine(query_embedding, closest_sample[TEXT_EMBEDDING_FIELD])
 
 
 def generate_filename(prompt):
@@ -104,7 +105,7 @@ def generate_sample_from_prompt(prompt, dataset, clip_model):
 
     url = replicate.run(
         "cjwbw/rembg:fb8af171cfa1616ddcf1242c093f9c46bcada5ad4cf6f2fbe8b81b330ec5c003",
-        input={"image": open(filepath, "rb")}
+        input={"image": open(filepath, "rb")},
     )
     content = requests.get(url).content
     with open(filepath, "wb") as f:
@@ -140,8 +141,8 @@ class CreateEmoji(foo.Operator):
                 ),
             )
         else:
-            return types.Placement()
-
+            # pylint: disable=no-value-for-parameter
+            return types.Placement
 
     def resolve_input(self, ctx):
         inputs = types.Object()
@@ -160,8 +161,14 @@ class CreateEmoji(foo.Operator):
         outputs = types.Object()
 
         outputs.str("prompt", label="Prompt")
-        outputs.float("dist", label=f"Minimum Distance to Existing Emoji. Must be > {DIST_THRESH}")
-        outputs.float("uniqueness", label=f"Uniqueness of Emoji. Must be > {UNIQUENESS_THRESH}")
+        outputs.float(
+            "dist",
+            label=f"Minimum Distance to Existing Emoji. Must be > {DIST_THRESH}",
+        )
+        outputs.float(
+            "uniqueness",
+            label=f"Uniqueness of Emoji. Must be > {UNIQUENESS_THRESH}",
+        )
         view = types.View(label="Emoji Not Distinct Enough")
         return types.Property(outputs, view=view)
 
@@ -173,9 +180,9 @@ class CreateEmoji(foo.Operator):
         compliant = _ensure_compliance(prompt)
         if not compliant:
             return {}
-        
+
         query_embedding = model.embed_prompt(f"An emoji of {prompt}")
-        
+
         uniqueness = _compute_query_uniqueness(query_embedding, dataset)
         dist = get_min_dist(query_embedding, dataset)
 
