@@ -10,6 +10,7 @@ import requests
 
 import numpy as np
 import openai
+from PIL import Image
 import replicate
 from scipy.spatial.distance import cosine
 from sklearn.neighbors import NearestNeighbors
@@ -19,18 +20,26 @@ import fiftyone as fo
 import fiftyone.operators as foo
 from fiftyone.operators import types
 
+# pylint disable=no-name-in-module,import-error
+import fiftyone.brain as fob
 import fiftyone.zoo as foz
 from fiftyone import ViewField as F
 
 K = 3
 DIST_WEIGHTS = np.array([0.6, 0.3, 0.1])
+DIST_THRESH = 0.15
+UNIQUENESS_THRESH = 0.7
+
+
+MODEL_NAME = "clip-vit-base32-torch"
+
 TEXT_SIM_KEY = "text_sim"
 TEXT_UNIQUENESS_FIELD = "text_uniqueness"
 TEXT_EMBEDDING_FIELD = "clip_emoji_of_text_embedding"
-MODEL_NAME = "clip-vit-base32-torch"
 
-DIST_THRESH = 0.15
-UNIQUENESS_THRESH = 0.7
+IMAGE_SIM_KEY = "image_sim"
+IMAGE_UNIQUENESS_FIELD = "image_uniqueness"
+IMAGE_EMBEDDING_FIELD = "clip_image_embedding"
 
 
 def _ensure_compliance(prompt):
@@ -60,6 +69,19 @@ def _compute_query_uniqueness(query_embedding, dataset):
     return uqu / scale
 
 
+def _update_uniqueness(dataset):
+    fob.compute_uniqueness(
+        dataset,
+        uniqueness_field=TEXT_UNIQUENESS_FIELD,
+        embeddings=TEXT_EMBEDDING_FIELD,
+    )
+    # fob.compute_uniqueness(
+    #     dataset,
+    #     uniqueness_field=IMAGE_UNIQUENESS_FIELD,
+    #     embeddings=IMAGE_EMBEDDING_FIELD,
+    # )
+
+
 def get_min_dist(query_embedding, dataset):
     closest_sample = dataset.sort_by_similarity(
         query_embedding, brain_key=TEXT_SIM_KEY, k=1
@@ -73,7 +95,15 @@ def generate_filename(prompt):
     return prompt.replace(" ", "_") + ".png"
 
 
-def generate_sample_from_prompt(prompt, dataset, clip_model):
+def generate_sample_embeddings(sample, model):
+    name = sample.name
+    prompt = f"An emoji of {name}"
+    sample[TEXT_EMBEDDING_FIELD] = model.embed_prompt(prompt)
+    # im_arr = np.array(Image.open(sample.filepath))
+    # sample[IMAGE_EMBEDDING_FIELD] = model.embed(im_arr)
+
+
+def generate_sample_from_prompt(prompt, dataset, model):
     input = {
         "width": 1024,
         "height": 1024,
@@ -114,10 +144,22 @@ def generate_sample_from_prompt(prompt, dataset, clip_model):
     sample = fo.Sample(
         filepath=filepath,
         name=prompt,
-        text_embedding=clip_model.embed_prompt(prompt),
         original=False,
     )
+    generate_sample_embeddings(sample, model)
     dataset.add_sample(sample)
+
+    sample_ids = [sample.id]
+
+    # image_index = dataset.load_brain_results(IMAGE_SIM_KEY)
+    # image_embeddings = np.array([sample[IMAGE_EMBEDDING_FIELD]])
+    # image_index.add_to_index(image_embeddings, sample_ids)
+
+    text_index = dataset.load_brain_results(TEXT_SIM_KEY)
+    text_embeddings = np.array([sample[TEXT_EMBEDDING_FIELD]])
+    text_index.add_to_index(text_embeddings, sample_ids)
+
+    _update_uniqueness(dataset)
 
 
 class CreateEmoji(foo.Operator):
