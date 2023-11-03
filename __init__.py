@@ -38,13 +38,13 @@ def generate_sample_from_prompt(prompt, dataset, clip_model):
         "prompt": f"A TOK emoji of {prompt}, white background",
         "refine": "expert_ensemble_refiner",
         "scheduler": "K_EULER",
-        "lora_scale": 0.8,
+        "lora_scale": 0.99,
         "num_outputs": 1,
-        "guidance_scale": 7.5,
+        "guidance_scale": 8,
         "apply_watermark": False,
         "high_noise_frac": 0.99,
         "negative_prompt": "",
-        "prompt_strength": 0.9,
+        "prompt_strength": 0.95,
         "num_inference_steps": 50,
     }
 
