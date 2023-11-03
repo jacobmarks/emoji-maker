@@ -136,7 +136,7 @@ class CreateEmoji(foo.Operator):
 
         if dist > 0.1:
             generate_sample_from_prompt(prompt, dataset, model)
-            ctx.trigger("reload_dataset")
+            ctx.trigger("reload_samples")
             return {}
         return {
             "prompt": prompt,
