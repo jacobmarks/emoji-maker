@@ -27,8 +27,10 @@ from fiftyone import ViewField as F
 
 K = 3
 DIST_WEIGHTS = np.array([0.6, 0.3, 0.1])
-DIST_THRESH = 0.15
-UNIQUENESS_THRESH = 0.7
+# DIST_THRESH = 0.15
+# UNIQUENESS_THRESH = 0.7
+DIST_THRESH = 0.0
+UNIQUENESS_THRESH = 0.0
 
 
 MODEL_NAME = "clip-vit-base32-torch"
@@ -58,9 +60,7 @@ def _compute_query_uniqueness(query_embedding, dataset):
     knn = NearestNeighbors(n_neighbors=K).fit(embeddings)
 
     most_unique_sample = (
-        dataset.exists(TEXT_UNIQUENESS_FIELD)
-        .sort_by(TEXT_UNIQUENESS_FIELD)
-        .last()
+        dataset.exists(TEXT_UNIQUENESS_FIELD).sort_by(TEXT_UNIQUENESS_FIELD).last()
     )
     mu_embedding = most_unique_sample[TEXT_EMBEDDING_FIELD]
 
@@ -183,8 +183,7 @@ class CreateEmoji(foo.Operator):
                 ),
             )
         else:
-            # pylint: disable=no-value-for-parameter
-            return types.Placement
+            return types.Placement()
 
     def resolve_input(self, ctx):
         inputs = types.Object()
@@ -228,20 +227,20 @@ class CreateEmoji(foo.Operator):
         uniqueness = _compute_query_uniqueness(query_embedding, dataset)
         dist = get_min_dist(query_embedding, dataset)
 
-        lcond = len(prompt) <= 16
+        lcond = len(prompt) <= 20
         ucond = uniqueness > UNIQUENESS_THRESH
         dcond = dist > DIST_THRESH
 
-        if lcond and ucond and dcond:
-            generate_sample_from_prompt(prompt, dataset, model)
-            ctx.trigger("reload_samples")
-            return {}
-        else:
-            return {
-                "prompt": prompt,
-                "dist": dist,
-                "uniqueness": uniqueness,
-            }
+        # if lcond and ucond and dcond:
+        generate_sample_from_prompt(prompt, dataset, model)
+        ctx.trigger("reload_samples")
+        return {}
+        # else:
+        #     return {
+        #         "prompt": prompt,
+        #         "dist": dist,
+        #         "uniqueness": uniqueness,
+        # }
 
 
 def register(plugin):
