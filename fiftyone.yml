@@ -5,4 +5,6 @@ version: "1.0.3"
 description: "Add emojis from text prompts"
 url: "https://github.com/jacobmarks/emoji-maker"
 operators:
-  - create_emoji
+- search_emojis
+- copy_emoji_to_clipboard
+  # - create_emoji
